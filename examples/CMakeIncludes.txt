@@ -1,0 +1,9 @@
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:-std=c++17>")
+
+include_directories(${DOCTEST_INCLUDEDIR})
+include_directories(${SPDLOG_INCLUDEDIR})
+
+set(PROJ_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/../src)
+

@@ -58,6 +58,30 @@ int main(int argc, char* argv[])
                                     send(std::move(resp));
                                 }));
 
+    webServer->addHttpRoute(Stalk::Route::Http(
+                                "/delayed", { Stalk::Verb::Get },
+                                [&ioc, logger](Stalk::ConnectionDetail detail, Stalk::Request&& req, Stalk::RequestVariables&& requestVars, Stalk::SendResponse&& send)
+                                {
+                                    logger->info("Received request: {} {} vars:{}", req.target(), req.method(), requestVars);
+                                    logger->info("Delaying response");
+
+                                        auto timer = std::make_shared<boost::asio::steady_timer>(ioc);
+
+                                        // respond after timer fires
+                                        timer->expires_after(std::chrono::seconds(2));
+                                        timer->async_wait([timer, logger, req{std::move(req)}, send{std::move(send)}](const boost::system::error_code&)
+                                            {
+                                                logger->info("Responding to request {}", req);
+
+                                                auto resp = Stalk::Response(req)
+                                                                .status(Stalk::Status::ok)
+                                                                .set(Stalk::Field::content_type, "text/plain")
+                                                                .body("Delayed Response");
+
+                                                send(std::move(resp));
+                                            });
+                                }));
+
     webServer->addWebsocketRoute(Stalk::Route::Websocket(
                                 "/user/:id",
                                 Stalk::RoutedWebsocketPreUpgradeCb(),

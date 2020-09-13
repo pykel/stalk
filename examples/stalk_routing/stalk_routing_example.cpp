@@ -91,7 +91,7 @@ int main(int argc, char* argv[])
 {
     uint16_t port = argc > 1 ? static_cast<uint16_t>(std::stoul(argv[1])) : 10000;
 
-    Stalk::Logger::setDefaultLevel(Stalk::Logger::Trace);
+    Stalk::Logger::setDefaultLevel(Stalk::Logger::Debug);
 
     auto logger = Stalk::Logger::get("stalk-routing-example");
 

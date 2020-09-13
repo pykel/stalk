@@ -11,7 +11,7 @@ void Logger::log(Level lvl, const std::string& msg)
 
         if (!logCb_)
         {
-            std::cout << name_ << ":" << levelName(Level::Trace) << ": " << view << std::endl;
+            std::cout << name_ << ":" << levelName(lvl) << ": " << view << std::endl;
         }
         else
         {

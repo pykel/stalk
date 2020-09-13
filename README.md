@@ -1,6 +1,7 @@
 # stalk library
 C++ Boost.Beast web-service wrapper library.
 Adding routing / security handling.
+Websocket routing.
 
 # Basic Usage
 

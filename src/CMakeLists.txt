@@ -36,7 +36,7 @@ set(HEADER_FILES
     ${HEADER_PATH}/stalk_websocket_client.h
     ${HEADER_PATH}/stalk_server.h
     ${HEADER_PATH}/stalk_router.h
-    ${HEADER_PATH}/stalk_header.h
+    ${HEADER_PATH}/stalk_logger.h
     )
 
 set(SOURCE_FILES

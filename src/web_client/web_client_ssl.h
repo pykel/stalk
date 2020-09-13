@@ -10,7 +10,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/stream.hpp>
 #include "web_client_types.h"
-#include "logger.h"
+#include "stalk/stalk_logger.h"
 
 
 // Performs an HTTP GET and prints the response
@@ -50,7 +50,7 @@ private:
     WebClient::Response res_;
     WebClient::ResponseCb responseCb_;
     WebClient::ErrorCb errorCb_;
-    std::shared_ptr<spdlog::logger> logger_;
+    Stalk::LogPtr logger_;
 };
 
 

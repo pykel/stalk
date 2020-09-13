@@ -13,8 +13,7 @@
 #include "stalk_verb_convert.h"
 #include "stalk_field_convert.h"
 #include "utils/string_transform.h"
-#include "logger.h"
-
+#include "stalk/stalk_logger.h"
 
 namespace Stalk
 {
@@ -231,7 +230,7 @@ private:
     WebClient::ErrorCb errorCb_;
     Request req_;
     Response resp_;
-    std::shared_ptr<spdlog::logger> logger_;
+    LogPtr logger_;
 };
 
 // Performs an HTTP GET and prints the response
@@ -410,7 +409,7 @@ private:
     Response resp_;
     bool connected_ = false;
     bool inProgress_ = false;
-    std::shared_ptr<spdlog::logger> logger_;
+    LogPtr logger_;
 };
 
 
@@ -440,7 +439,7 @@ private:
     boost::asio::io_context& ioc_;
     boost::asio::ssl::context ctx_;
     Request req_;
-    std::shared_ptr<spdlog::logger> logger_;
+    LogPtr logger_;
     std::variant<std::shared_ptr<ClientTcp>, std::shared_ptr<ClientSsl>> client_;
 };
 

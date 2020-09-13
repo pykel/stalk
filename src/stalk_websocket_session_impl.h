@@ -19,7 +19,7 @@
 #include <boost/beast/ssl.hpp>
 #endif
 #include "stalk_types_internal.h"
-#include "logger.h"
+#include "stalk/stalk_logger.h"
 
 
 namespace Stalk
@@ -86,7 +86,7 @@ protected:
     WebsocketReadCb readCb_;
     Strand strand_;
     boost::asio::steady_timer timer_;
-    std::shared_ptr<spdlog::logger> logger_;
+    LogPtr logger_;
     Request acceptedRequest_;
     bool close_ = false;
 

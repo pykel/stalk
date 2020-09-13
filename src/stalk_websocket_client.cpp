@@ -15,7 +15,7 @@
 #include "stalk_verb_convert.h"
 #include "stalk_field_convert.h"
 #include "stalk_connection_detail_builder.h"
-#include "logger.h"
+#include "stalk/stalk_logger.h"
 
 
 namespace Stalk
@@ -463,7 +463,7 @@ private:
     Request req_;
     ConnectionDetail peerConnectionDetail_;
     std::atomic<bool> writeInProgress_ = false;
-    std::shared_ptr<spdlog::logger> logger_;
+    LogPtr logger_;
 };
 
 //----------------------------------------------------------------------------

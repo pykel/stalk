@@ -23,7 +23,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
 include_directories(${PROJ_SOURCE_DIR}/include)
 include_directories(${PROJ_SOURCE_DIR}/web_client)
-include_directories(${EXTERNAL_DIR}/logger)
+include_directories(${EXTERNAL_DIR}/logger/include)
 include_directories(${PROJ_SOURCE_DIR}/include)
 include_directories(${EXTERNAL_DIR}/doctest_1.2.7)
 include_directories(${EXTERNAL_DIR}/nlohmann-json-3.1.0)
@@ -40,7 +40,6 @@ set(SOURCE_FILES
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
 target_link_libraries(${PROJECT_NAME}
-    logger
     stalk
     ${OPENSSL_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
@@ -49,4 +48,4 @@ target_link_libraries(${PROJECT_NAME}
 add_test(NAME ${PROJECT_NAME}
          COMMAND ${PROJECT_NAME})
 
-add_dependencies(${PROJECT_NAME} logger stalk)
+add_dependencies(${PROJECT_NAME} stalk)

@@ -8,8 +8,7 @@
 #include "stalk_response_impl.h"
 #include "stalk_websocket_session_impl.h"
 #include "stalk/stalk_connection_detail_ostream.h"
-#include "logger.h"
-
+#include "stalk/stalk_logger.h"
 
 namespace Stalk
 {
@@ -20,7 +19,7 @@ HttpSession::HttpSession(uint64_t id, Strand&& strand, boost::beast::flat_buffer
     strand_(std::move(strand)),
     timer_(static_cast<boost::asio::io_context&>(strand_.context()), (std::chrono::steady_clock::time_point::max)()),
     buffer_(std::move(buffer)),
-    logger_(Logger::get(("WebServer.HttpSession.") + std::to_string(reinterpret_cast<uint64_t>(this))))
+    logger_(Logger::get("WebServer.HttpSession." + std::to_string(reinterpret_cast<uint64_t>(id))))
 {
     logger_->trace("HttpSession()");
 }

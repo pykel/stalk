@@ -6,10 +6,10 @@
 #include "stalk/stalk_request.h"
 #include "stalk/stalk_server.h"
 #include "stalk/stalk_client.h"
+#include "stalk/stalk_logger.h"
 #include "web_client_types.h"
 #include "web_client_ssl.h"
 #include "web_client_tcp.h"
-#include "logger.h"
 #include "test_fixtures.h"
 
 struct RequestInfo
@@ -29,10 +29,10 @@ struct RequestInfo
 TEST_CASE("stalk-router-test") {
     std::function<void()> exitTestFn;
 
-    Logger::setLevel(spdlog::level::warn);
+    Stalk::Logger::setDefaultLevel(Stalk::Logger::Warn);
 
-    auto logger = Logger::get("stalk-router-test");
-    logger->set_level(spdlog::level::info);
+    auto logger = Stalk::Logger::get("stalk-router-test");
+    logger->setLevel(Stalk::Logger::Info);
     logger->info("starting");
 
     boost::asio::io_context ioc;

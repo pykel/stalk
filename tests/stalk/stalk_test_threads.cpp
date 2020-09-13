@@ -7,10 +7,10 @@
 #include "stalk/stalk_request.h"
 #include "stalk/stalk_server.h"
 #include "stalk/stalk_client.h"
+#include "stalk/stalk_logger.h"
 #include "web_client_types.h"
 #include "web_client_ssl.h"
 #include "web_client_tcp.h"
-#include "logger.h"
 #include "test_fixtures.h"
 
 struct RequestInfo
@@ -30,10 +30,10 @@ struct RequestInfo
 TEST_CASE("stalk-thread") {
     std::function<void()> exitTestFn;
 
-    Logger::setLevel(spdlog::level::warn);
+    Stalk::Logger::setDefaultLevel(Stalk::Logger::Warn);
 
-    auto logger = Logger::get("stalk-thread-tests");
-    logger->set_level(spdlog::level::info);
+    auto logger = Stalk::Logger::get("stalk-thread-tests");
+    logger->setLevel(Stalk::Logger::Info);
     logger->info("starting");
 
     const int clientCount = 100;
@@ -177,10 +177,10 @@ TEST_CASE("stalk-thread") {
 TEST_CASE("stalk-thread-delayed-response") {
     std::function<void()> exitTestFn;
 
-    Logger::setLevel(spdlog::level::warn);
+    Stalk::Logger::setDefaultLevel(Stalk::Logger::Warn);
 
-    auto logger = Logger::get("stalk_test.stalk-thread-delayed-response");
-    logger->set_level(spdlog::level::info);
+    auto logger = Stalk::Logger::get("stalk_test.stalk-thread-delayed-response");
+    logger->setLevel(Stalk::Logger::Info);
     logger->info("starting");
 
     const int clientCount = 100;

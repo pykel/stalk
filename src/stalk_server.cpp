@@ -16,7 +16,7 @@
 #include "stalk_verb_convert.h"
 #include "stalk_field_convert.h"
 #include "stalk_connection_detail_builder.h"
-#include "logger.h"
+#include "stalk/stalk_logger.h"
 
 
 namespace Stalk
@@ -48,7 +48,7 @@ private:
     WebsocketConnectCb websocketConnectCb_;
     WebsocketReadCb websocketReadCb_;
     HttpRequestCb httpRequestCb_;
-    std::shared_ptr<spdlog::logger> logger_;
+    LogPtr logger_;
 };
 
 DetectSession::DetectSession(
@@ -57,7 +57,7 @@ DetectSession::DetectSession(
     socket_(std::move(socket)),
     ctx_(ctx),
     strand_(boost::asio::make_strand(socket_.get_executor())),
-    logger_(Logger::get(std::string("WebServer.DetectSession.") + std::to_string(reinterpret_cast<uint64_t>(this))))
+    logger_(Logger::get("WebServer.DetectSession"))
 {
     logger_->trace("DetectSession()");
 }
@@ -170,7 +170,7 @@ private:
     WebsocketConnectCb websocketConnectCb_;
     WebsocketReadCb websocketReadCb_;
     HttpRequestCb httpRequestCb_;
-    std::shared_ptr<spdlog::logger> logger_;
+    LogPtr logger_;
 };
 
 
@@ -184,7 +184,7 @@ ListenerImpl::ListenerImpl(
     socket_(ioc),
     address_(address),
     port_(port),
-    logger_(Logger::get(std::string("WebServer.Listener.") + std::to_string(reinterpret_cast<uint64_t>(this))))
+    logger_(Logger::get("WebServer.Listener"))
 {
     logger_->trace("Listener()");
 }
@@ -316,7 +316,9 @@ public:
     uint16_t port() const;
 
     void addHttpRoute(Route::Http&& route);
+    void removeHttpRoute(const std::string& path);
     void addWebsocketRoute(Route::Websocket&& route);
+    void removeWebsocketRoute(const std::string& path);
 
 private:
 
@@ -326,7 +328,7 @@ private:
     boost::asio::ssl::context ctx_;
     std::shared_ptr<ListenerImpl> listener_;
     Router router_;
-    std::shared_ptr<spdlog::logger> logger_;
+    LogPtr logger_;
 };
 
 
@@ -336,7 +338,7 @@ WebServerImpl::WebServerImpl(boost::asio::io_context& ioc,
                const std::string& privateKey,
                const std::string& certificate) :
     ctx_(boost::asio::ssl::context::sslv23),
-    logger_(Logger::get(std::string("Stalk.WebServer.") + std::to_string(reinterpret_cast<uint64_t>(this))))
+    logger_(Logger::get("Stalk.WebServer"))
 {
     ctx_.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2);
     ctx_.set_verify_mode(boost::asio::ssl::verify_peer);// | boost::asio::ssl::verify_fail_if_no_peer_cert);
@@ -475,6 +477,8 @@ uint16_t WebServerImpl::port() const
 
 void WebServerImpl::addHttpRoute(Route::Http&& route) { return router_.addHttpRoute(std::move(route)); }
 void WebServerImpl::addWebsocketRoute(Route::Websocket&& route) { return router_.addWebsocketRoute(std::move(route)); }
+void WebServerImpl::removeHttpRoute(const std::string& path) { return router_.removeHttpRoute(path); }
+void WebServerImpl::removeWebsocketRoute(const std::string& path) { return router_.removeWebsocketRoute(path); }
 
 //----------------------------------------------------------------------------
 
@@ -511,9 +515,19 @@ void WebServer::addHttpRoute(Route::Http&& route)
     impl_->addHttpRoute(std::move(route));
 }
 
+void WebServer::removeHttpRoute(const std::string& path)
+{
+    impl_->removeHttpRoute(path);
+}
+
 void WebServer::addWebsocketRoute(Route::Websocket&& route)
 {
     impl_->addWebsocketRoute(std::move(route));
+}
+
+void WebServer::removeWebsocketRoute(const std::string& path)
+{
+    impl_->removeWebsocketRoute(path);
 }
 
 

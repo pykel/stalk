@@ -8,7 +8,7 @@
 #include "stalk/stalk_server.h"
 #include "stalk/stalk_websocket_client.h"
 #include "stalk/stalk_connection_detail_ostream.h"
-#include "logger.h"
+#include "stalk/stalk_logger.h"
 #include "test_fixtures.h"
 
 
@@ -16,9 +16,9 @@ TEST_CASE("stalk-websocket-test") {
 
     std::function<void()> exitTestFn;
 
-    Logger::setLevel(spdlog::level::info);
+    Stalk::Logger::setDefaultLevel(Stalk::Logger::Info);
 
-    auto logger = Logger::get("stalk-websocket-test");
+    auto logger = Stalk::Logger::get("stalk-websocket-test");
     logger->info("starting");
 
 
@@ -188,9 +188,9 @@ TEST_CASE("stalk-websocket-security-test") {
 
     std::function<void()> exitTestFn;
 
-    Logger::setLevel(spdlog::level::info);
+    Stalk::Logger::setDefaultLevel(Stalk::Logger::Info);
 
-    auto logger = Logger::get("stalk-websocket-test");
+    auto logger = Stalk::Logger::get("stalk-websocket-test");
     logger->info("starting");
 
     Stalk::ConnectionDetail testClientConnectionDetail;
@@ -284,9 +284,9 @@ TEST_CASE("stalk-websocket-performance-test") {
 
     std::function<void()> exitTestFn;
 
-    Logger::setLevel(spdlog::level::info);
+    Stalk::Logger::setDefaultLevel(Stalk::Logger::Info);
 
-    auto logger = Logger::get("stalk-websocket-performance-test");
+    auto logger = Stalk::Logger::get("stalk-websocket-performance-test");
     logger->info("starting");
 
     enum class Counters

@@ -10,7 +10,7 @@ WebsocketSessionImpl::WebsocketSessionImpl(uint64_t id, Strand&& strand) :
     id_(id),
     strand_(std::move(strand)),
     timer_(static_cast<boost::asio::io_context&>(strand_.context()), (std::chrono::steady_clock::time_point::max)()),
-    logger_(Logger::get(std::string("WebServer.WebsocketSession.") + std::to_string(reinterpret_cast<uint64_t>(this))))
+    logger_(Logger::get("WebServer.WebsocketSession." + std::to_string(reinterpret_cast<uint64_t>(id))))
 {
 }
 

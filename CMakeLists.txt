@@ -13,7 +13,7 @@ set(tool_dest "bin")
 set(include_dest "include/${PROJECT_NAME}-${PROJECT_VERSION}")
 set(main_lib_dest "lib")
 
-add_subdirectory(external/logger)
+#add_subdirectory(external/logger)
 add_subdirectory(src)
 add_subdirectory(tests)
 add_subdirectory(examples)

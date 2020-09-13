@@ -9,7 +9,7 @@
 #include <boost/beast/http.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include "web_client_types.h"
-#include "logger.h"
+#include "stalk/stalk_logger.h"
 
 
 class WebClientTcp : public std::enable_shared_from_this<WebClientTcp>
@@ -46,7 +46,7 @@ private:
     WebClient::Response res_;
     WebClient::ResponseCb responseCb_;
     WebClient::ErrorCb errorCb_;
-    std::shared_ptr<spdlog::logger> logger_;
+    Stalk::LogPtr logger_;
 };
 
 

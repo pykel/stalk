@@ -21,7 +21,9 @@ public:
     std::variant<Status, MatchedHttpRoute> getHttpRoute(const std::string& path, const Verb method);
     std::optional<std::pair<Route::Websocket, RequestVariables>> getWebsocketRoute(const std::string& path);
     void addHttpRoute(Route::Http&& route);
+    void removeHttpRoute(const std::string& path);
     void addWebsocketRoute(Route::Websocket&& route);
+    void removeWebsocketRoute(const std::string& path);
 
 private:
 

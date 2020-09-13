@@ -34,7 +34,9 @@ public:
     uint16_t port() const;
 
     void addHttpRoute(Route::Http&& route);
+    void removeHttpRoute(const std::string& path);
     void addWebsocketRoute(Route::Websocket&& route);
+    void removeWebsocketRoute(const std::string& path);
 
 private:
 

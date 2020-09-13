@@ -44,10 +44,36 @@ void Router::addHttpRoute(Route::Http&& route)
     std::sort(httpRoutes_.begin(), httpRoutes_.end(), httpRouteCmp);
 }
 
+void Router::removeHttpRoute(const std::string& path)
+{
+    auto it = std::find_if(httpRoutes_.begin(), httpRoutes_.end(), [&path](const Route::Http& r)
+        {
+            return r.path() == path;
+        });
+
+    if (it != httpRoutes_.end())
+    {
+        httpRoutes_.erase(it);
+    }
+}
+
 void Router::addWebsocketRoute(Route::Websocket&& route)
 {
     websocketRoutes_.push_back(std::move(route));
     std::sort(websocketRoutes_.begin(), websocketRoutes_.end(), websocketRouteCmp);
+}
+
+void Router::removeWebsocketRoute(const std::string& path)
+{
+    auto it = std::find_if(websocketRoutes_.begin(), websocketRoutes_.end(), [&path](const Route::Websocket& r)
+        {
+            return r.path() == path;
+        });
+
+    if (it != websocketRoutes_.end())
+    {
+        websocketRoutes_.erase(it);
+    }
 }
 
 bool Router::pathCmp(const std::string& lhs, const std::string& rhs)

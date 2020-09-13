@@ -21,7 +21,7 @@
 #endif
 #include "stalk/stalk_types.h"
 #include "stalk_types_internal.h"
-#include "logger.h"
+#include "stalk/stalk_logger.h"
 #include "stalk/stalk_request.h"
 #include "stalk/stalk_connection_detail.h"
 
@@ -71,7 +71,7 @@ protected:
     Strand strand_;
     boost::asio::steady_timer timer_;
     boost::beast::flat_buffer buffer_;
-    std::shared_ptr<spdlog::logger> logger_;
+    LogPtr logger_;
     std::vector<Response> responses_;
     BeastRequest req_;
     BeastResponse response_;

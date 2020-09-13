@@ -16,10 +16,11 @@ pkg_check_modules(OPENSSL openssl)
 include_directories(${OPENSSL_INCLUDE_DIRS})
 link_directories(${OPENSSL_LIBRARY_DIRS})
 
-include_directories(${SPDLOG_INCLUDEDIR})
+# include_directories(${SPDLOG_INCLUDEDIR})
+include_directories(${FMT_INCLUDEDIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/)
-include_directories(${EXTERNAL_DIR}/logger)
+# include_directories(${EXTERNAL_DIR}/logger/include)
 
 set(HEADER_PATH ${CMAKE_CURRENT_SOURCE_DIR}/include/stalk/)
 set(HEADER_FILES
@@ -37,9 +38,11 @@ set(HEADER_FILES
     ${HEADER_PATH}/stalk_websocket_client.h
     ${HEADER_PATH}/stalk_server.h
     ${HEADER_PATH}/stalk_router.h
+    ${HEADER_PATH}/stalk_header.h
     )
 
 set(SOURCE_FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/stalk_logger.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stalk_web_session.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stalk_request.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stalk_response.cpp

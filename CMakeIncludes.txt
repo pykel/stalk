@@ -15,7 +15,8 @@ set(SYSTEM_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(PROJ_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/src)
 
 set(EXTERNAL_DIR "${SYSTEM_DIR}/external")
-set(SPDLOG_INCLUDEDIR "${SYSTEM_DIR}/external/spdlog/include/")
+# set(SPDLOG_INCLUDEDIR "${SYSTEM_DIR}/external/spdlog/include/")
+set(FMT_INCLUDEDIR "${SYSTEM_DIR}/external/fmt/include")
 set(DOCTEST_INCLUDEDIR "${SYSTEM_DIR}/external/doctest/doctest")
 
 enable_testing()

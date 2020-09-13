@@ -30,7 +30,7 @@ public:
     };
 
     using ErrorHandler = std::function<void(const std::string&)>;
-    using LogCb = std::function<void(Level,const std::string_view& view)>;
+    using LogCb = std::function<void(Level,const std::string_view& msg)>;
 
     Logger() {}
     Logger(const std::string& name) : name_(name), level_(defaultLevel_.load()) {}
@@ -84,15 +84,16 @@ private:
         {
             memory_buf_t buf;
             fmt::format_to(buf, fmt, args...);
-            const auto view = std::string_view(buf.data(), buf.size());// string_view_t(buf.data(), buf.size());
 
             if (!logCb_)
             {
+                const auto view = std::string_view(buf.data(), buf.size());// string_view_t(buf.data(), buf.size());
                 std::cout << name_ << ":" << levelName(lvl) << ": " << view << std::endl;
             }
             else
             {
-                logCb_(lvl, view);
+                std::string msg = "[" + name_ + "] " + std::string(buf.data(), buf.size());
+                logCb_(lvl, msg);
             }
         }
         catch (const std::exception &e)

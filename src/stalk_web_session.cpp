@@ -395,6 +395,7 @@ void SslHttpSession::on_handshake(boost::system::error_code ec, std::size_t byte
     buffer_.consume(bytes_used);
 
     connectionDetail_ = ConnectionDetailBuilder::build(id(), stream());
+    logger_->debug("on_handshake: connectionDetail:{}", connectionDetail_);
 
     start_read();
 }

@@ -319,6 +319,7 @@ public:
     void removeHttpRoute(const std::string& path);
     void addWebsocketRoute(Route::Websocket&& route);
     void removeWebsocketRoute(const std::string& path);
+    void setRouteErrorHandler(UnroutedRequestCb cb);
 
 private:
 
@@ -328,6 +329,7 @@ private:
     boost::asio::ssl::context ctx_;
     std::shared_ptr<ListenerImpl> listener_;
     Router router_;
+    UnroutedRequestCb unroutedRequestCb_;
     LogPtr logger_;
 };
 
@@ -342,21 +344,9 @@ WebServerImpl::WebServerImpl(boost::asio::io_context& ioc,
 {
     ctx_.set_options(boost::asio::ssl::context::default_workarounds | boost::asio::ssl::context::no_sslv2);
     ctx_.set_verify_mode(boost::asio::ssl::verify_peer);// | boost::asio::ssl::verify_fail_if_no_peer_cert);
-    ctx_.set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context& ctx)
+    ctx_.set_verify_callback([this](bool /*preverified*/, boost::asio::ssl::verify_context& /*ctx*/)
         {
             logger_->trace("WebServerImpl().verify_callback called");
-            /// \todo allow verify callback with ConnectionDetail
-#if 0
-            if (ctx.native_handle())
-            {
-                const X509* peerCert = X509_STORE_CTX_get_current_cert(ctx.native_handle());
-                if (peerCert)
-                {
-                    auto detail = Stalk::ConnectionDetailBuilder::buildCertDetail(peerCert);
-                    logger_->trace("WebServerImpl().verify_callback : {} : {}", detail.digest, detail.pem);
-                }
-            }
-#endif
             return true;
         });
 
@@ -376,6 +366,11 @@ WebServerImpl::WebServerImpl(boost::asio::io_context& ioc,
             if (!matchingRoute)
             {
                 logger_->debug("WebsocketPreUpgradeCb : No matching route found");
+                if (unroutedRequestCb_)
+                {
+                    return unroutedRequestCb_(Status::not_found, detail, std::move(req), std::move(send));
+                }
+
                 return send(Response::build(req, Status::not_found));
             }
 
@@ -433,14 +428,26 @@ WebServerImpl::WebServerImpl(boost::asio::io_context& ioc,
             if (std::holds_alternative<Status>(result))
             {
                 const auto& status = std::get<Status>(result);
-                logger_->debug("Returning {}", status);
+
+                logger_->debug("Route lookup error, status:{}", status);
+
+                if (unroutedRequestCb_)
+                {
+                    return unroutedRequestCb_(status, detail, std::move(req), std::move(send));
+                }
+
                 return send(Response::build(req, status));
             }
 
             auto& matchingRoute = std::get<Router::MatchedHttpRoute>(result);
             if (!matchingRoute.first.requestCb())
             {
-                logger_->debug("Returning {}", Status::method_not_allowed);
+                logger_->debug("Route without callback found");
+                if (unroutedRequestCb_)
+                {
+                    return unroutedRequestCb_(Status::method_not_allowed, detail, std::move(req), std::move(send));
+                }
+
                 return send(Response::build(req, Status::method_not_allowed));
             }
 
@@ -479,6 +486,7 @@ void WebServerImpl::addHttpRoute(Route::Http&& route) { return router_.addHttpRo
 void WebServerImpl::addWebsocketRoute(Route::Websocket&& route) { return router_.addWebsocketRoute(std::move(route)); }
 void WebServerImpl::removeHttpRoute(const std::string& path) { return router_.removeHttpRoute(path); }
 void WebServerImpl::removeWebsocketRoute(const std::string& path) { return router_.removeWebsocketRoute(path); }
+void WebServerImpl::setRouteErrorHandler(UnroutedRequestCb cb) { unroutedRequestCb_ = cb; }
 
 //----------------------------------------------------------------------------
 
@@ -530,5 +538,9 @@ void WebServer::removeWebsocketRoute(const std::string& path)
     impl_->removeWebsocketRoute(path);
 }
 
+void WebServer::setRouteErrorHandler(UnroutedRequestCb cb)
+{
+    impl_->setRouteErrorHandler(cb);
+}
 
 } // namespace Stalk

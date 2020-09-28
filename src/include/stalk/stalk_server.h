@@ -38,6 +38,10 @@ public:
     void addWebsocketRoute(Route::Websocket&& route);
     void removeWebsocketRoute(const std::string& path);
 
+    /// Set the handler to be called for not-found or invalid-method requests.
+    /// Server will respond with not-found / invalid-method etc status if no handler set.
+    void setRouteErrorHandler(UnroutedRequestCb cb = UnroutedRequestCb());
+
 private:
 
     std::unique_ptr<WebServerImpl> impl_;

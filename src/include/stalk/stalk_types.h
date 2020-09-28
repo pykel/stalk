@@ -18,13 +18,14 @@ using SendResponse = std::function<void(Response&& resp)>;
 using WebsocketUpgrade = std::function<void(Request&& req)>;
 using CloseSession = std::function<void(const std::string& reason)>;
 
-typedef std::map<std::string, std::string> RequestVariables;
+using RequestVariables = std::map<std::string, std::string>;
 
-typedef std::function<void(ConnectionDetail, Request&&, RequestVariables&& variables, SendResponse&& send, WebsocketUpgrade&& upgrade)> RoutedWebsocketPreUpgradeCb;
-typedef std::function<void(bool connected, std::shared_ptr<WebsocketSession> session, RequestVariables&& variables)> RoutedWebsocketConnectCb;
-typedef std::function<void(std::shared_ptr<WebsocketSession> session, std::string&& msg)> RoutedWebsocketReadCb;
+using RoutedWebsocketPreUpgradeCb = std::function<void(ConnectionDetail, Request&&, RequestVariables&& variables, SendResponse&& send, WebsocketUpgrade&& upgrade)>;
+using RoutedWebsocketConnectCb = std::function<void(bool connected, std::shared_ptr<WebsocketSession> session, RequestVariables&& variables)>;
+using RoutedWebsocketReadCb = std::function<void(std::shared_ptr<WebsocketSession> session, std::string&& msg)>;
 
-typedef std::function<void(ConnectionDetail, Request&&, RequestVariables&& variables, SendResponse&& send)> RoutedHttpRequestCb;
+using RoutedHttpRequestCb = std::function<void(ConnectionDetail, Request&&, RequestVariables&& variables, SendResponse&& send)>;
+using UnroutedRequestCb = std::function<void(Status, ConnectionDetail, Request&&, SendResponse&& send)>;
 
 }
 

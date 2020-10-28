@@ -13,7 +13,15 @@ set(tool_dest "bin")
 set(include_dest "include/${PROJECT_NAME}-${PROJECT_VERSION}")
 set(main_lib_dest "lib")
 
+option(STALK__DISABLE_TESTS "Disable building tests" OFF)
+option(STALK__DISABLE_EXAMPLES "Disable building examples" OFF)
+
 add_subdirectory(src)
-add_subdirectory(tests)
-add_subdirectory(examples)
+
+if (NOT STALK__DISABLE_TESTS)
+    add_subdirectory(tests)
+endif()
+if (NOT STALK__DISABLE_EXAMPLES)
+    add_subdirectory(examples)
+endif()
 

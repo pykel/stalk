@@ -41,6 +41,7 @@ public:
 
     void setLevel(Level level) { level_ = level; }
     int level() const { return level_; }
+    static Level levelFromString(const char* lvl);
 
 #define LOG_FUNC(name, level) \
     template<typename FormatString, typename... Args>                   \

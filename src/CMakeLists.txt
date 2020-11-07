@@ -47,6 +47,7 @@ set(SOURCE_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/stalk_websocket_session.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stalk_websocket_session_impl.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stalk_router.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/stalk_route.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stalk_server.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stalk_client.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stalk_websocket_client.cpp

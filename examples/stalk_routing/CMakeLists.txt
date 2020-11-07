@@ -12,6 +12,7 @@ find_package(Threads REQUIRED)
 find_package(PkgConfig)
 pkg_check_modules(OPENSSL openssl)
 
+include_directories(${FMT_INCLUDEDIR})
 include_directories(${OPENSSL_INCLUDE_DIRS})
 link_directories(${OPENSSL_LIBRARY_DIRS})
 

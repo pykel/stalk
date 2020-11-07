@@ -153,6 +153,26 @@ TEST_CASE("stalk-router-test") {
         REQUIRE_EQ(receivedRequests.size(), 0);
     }
 
+    SUBCASE("NotFound_CustomCallback") {
+
+        const std::string id = "NotFound_NoRoute";
+
+        bool customHandlerCalled = false;
+        server->setRouteErrorHandler([&customHandlerCalled](Stalk::Status status, Stalk::ConnectionDetail detail, Stalk::Request&&, Stalk::SendResponse&& send) {
+            customHandlerCalled = true;
+        });
+        logger->info("Running client");
+        client->post(addr, std::to_string(server->port()), false, "/test-route",
+                        "application/json", "{ \"bodyKey\", \"bodyValue\" }",
+                       clientResponseCb,
+                       clientErrorCb);
+
+        ioc.run();
+
+        CHECK_EQ(clientReceivedStatus, Stalk::Status::not_found);
+        REQUIRE_EQ(receivedRequests.size(), 0);
+    }
+
 
     SUBCASE("Route_NoAcceptLongerPath") {
 

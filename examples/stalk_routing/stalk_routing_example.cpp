@@ -2,9 +2,12 @@
 #include "stalk_routing_example.h"
 #include <stdint.h>
 #include <string>
+#include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include "stalk/stalk_server.h"
+#include "stalk/stalk_websocket_session.h"
 #include "stalk/stalk_logger.h"
+#include <fmt/ostream.h>
 
 std::ostream& operator<<(std::ostream& os, const Stalk::RequestVariables& vars);
 
@@ -105,6 +108,14 @@ int main(int argc, char* argv[])
     logger->info("Web Server running on port: {}", webServer->port());
 
     UserRoute userRoutes(webServer);
+
+    webServer->addHttpRoute(Stalk::Route::Http(
+                                "/", { Stalk::Verb::Get },
+                                [logger](Stalk::ConnectionDetail, Stalk::Request&& req, Stalk::RequestVariables&& requestVars, Stalk::SendResponse&& send)
+                                {
+                                    logger->info("Received request: {} {} vars:{}", req.target(), req.method(), requestVars);
+                                    send(Stalk::Response::build(req, Stalk::Status::ok));
+                                }));
 
     webServer->addHttpRoute(Stalk::Route::Http(
                                 "/group/:id/?optionalParam", { Stalk::Verb::Get },

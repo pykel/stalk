@@ -6,6 +6,7 @@
 #include <boost/algorithm/string.hpp>
 #include "stalk/stalk_request.h"
 #include "stalk/stalk_server.h"
+#include "stalk/stalk_websocket_session.h"
 #include "stalk/stalk_websocket_client.h"
 #include "stalk/stalk_connection_detail_ostream.h"
 #include "stalk/stalk_logger.h"

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <functional>
+#include <memory>
 #include <map>
 #include "stalk_request.h"
 #include "stalk_response.h"

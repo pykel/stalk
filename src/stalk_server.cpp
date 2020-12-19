@@ -22,7 +22,6 @@
 namespace Stalk
 {
 
-//using Listener = ::WebServer::Listener;
 // Detects SSL handshakes
 class DetectSession : public std::enable_shared_from_this<DetectSession>
 {
@@ -37,12 +36,11 @@ public:
 
     // Launch the detector
     void run();
-    void on_detect(boost::system::error_code ec, boost::tribool result);
+    void on_detect(boost::system::error_code ec, bool result);
 
 private:
-    boost::asio::ip::tcp::socket socket_;
+    boost::beast::tcp_stream stream_;
     boost::asio::ssl::context& ctx_;
-    boost::asio::strand<executor_context> strand_;
     boost::beast::flat_buffer buffer_;
     WebsocketPreUpgradeCb websocketPreUpgradeCb_;
     WebsocketConnectCb websocketConnectCb_;
@@ -54,9 +52,8 @@ private:
 DetectSession::DetectSession(
         boost::asio::ip::tcp::socket&& socket,
         boost::asio::ssl::context& ctx) :
-    socket_(std::move(socket)),
+    stream_(std::move(socket)),
     ctx_(ctx),
-    strand_(boost::asio::make_strand(socket_.get_executor())),
     logger_(Logger::get("WebServer.DetectSession"))
 {
     logger_->trace("DetectSession()");
@@ -94,18 +91,14 @@ DetectSession& DetectSession::setHttpReqCb(HttpRequestCb cb)
 void DetectSession::run()
 {
     async_detect_ssl(
-                socket_,
+                stream_,
                 buffer_,
-                boost::asio::bind_executor(
-                    strand_,
-                    std::bind(
-                        &DetectSession::on_detect,
-                        shared_from_this(),
-                        std::placeholders::_1,
-                        std::placeholders::_2)));
+                boost::beast::bind_front_handler(
+                    &DetectSession::on_detect,
+                    this->shared_from_this()));
 }
 
-void DetectSession::on_detect(boost::system::error_code ec, boost::tribool result)
+void DetectSession::on_detect(boost::system::error_code ec, bool result)
 {
     if (ec)
     {
@@ -120,9 +113,9 @@ void DetectSession::on_detect(boost::system::error_code ec, boost::tribool resul
     logger_->trace("on_detect: {}", (result ? "ssl" : "tcp"));
     std::shared_ptr<HttpSession> session;
     if (result)
-        session = std::make_shared<SslHttpSession>(id, std::move(socket_), ctx_, std::move(buffer_));
+        session = std::make_shared<SslHttpSession>(id, std::move(stream_), ctx_, std::move(buffer_));
     else
-        session = std::make_shared<PlainHttpSession>(id, std::move(socket_), std::move(buffer_));
+        session = std::make_shared<PlainHttpSession>(id, std::move(stream_), std::move(buffer_));
 
     session->setWebsocketPreUpgradeCb(websocketPreUpgradeCb_);
     session->setWebsocketConnectCb(websocketConnectCb_);
@@ -159,11 +152,11 @@ public:
 
 private:
     void do_accept();
-    void on_accept(boost::system::error_code ec);
+    void on_accept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket);
 
+    boost::asio::io_context& ioc_;
     boost::asio::ssl::context& ctx_;
     boost::asio::ip::tcp::acceptor acceptor_;
-    boost::asio::ip::tcp::socket socket_;
     std::string address_;
     uint16_t port_;
     WebsocketPreUpgradeCb websocketPreUpgradeCb_;
@@ -179,9 +172,9 @@ ListenerImpl::ListenerImpl(
         boost::asio::ssl::context& ctx,
         const std::string& address,
         uint16_t port) :
+    ioc_(ioc),
     ctx_(ctx),
-    acceptor_(ioc),
-    socket_(ioc),
+    acceptor_(boost::asio::make_strand(ioc)),
     address_(address),
     port_(port),
     logger_(Logger::get("WebServer.Listener"))
@@ -266,16 +259,18 @@ void ListenerImpl::stop()
     boost::system::error_code ec;
     acceptor_.cancel(ec);
     acceptor_.close(ec);
-    socket_.cancel(ec);
-    socket_.close(ec);
 }
 
 void ListenerImpl::do_accept()
 {
-    acceptor_.async_accept(socket_, std::bind(&ListenerImpl::on_accept, shared_from_this(), std::placeholders::_1));
+    acceptor_.async_accept(
+        boost::asio::make_strand(ioc_),
+        boost::beast::bind_front_handler(
+            &ListenerImpl::on_accept,
+            shared_from_this()));
 }
 
-void ListenerImpl::on_accept(boost::system::error_code ec)
+void ListenerImpl::on_accept(boost::system::error_code ec, boost::asio::ip::tcp::socket socket)
 {
     if (ec)
     {
@@ -287,7 +282,7 @@ void ListenerImpl::on_accept(boost::system::error_code ec)
     }
 
     // Create the detector http_session and run it
-    auto detectSession = std::make_shared<DetectSession>(std::move(socket_), ctx_);
+    auto detectSession = std::make_shared<DetectSession>(std::move(socket), ctx_);
     detectSession->setWebsocketPreUpgradeCb(websocketPreUpgradeCb_);
     detectSession->setWebsocketConnectCb(websocketConnectCb_);
     detectSession->setWebsocketReadCb(websocketReadCb_);

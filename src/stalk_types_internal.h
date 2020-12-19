@@ -7,6 +7,9 @@
 #include <map>
 #include <memory>
 #include <boost/asio/version.hpp>
+#if BOOST_ASIO_VERSION >= 101800
+#include <boost/asio/bind_executor.hpp>
+#endif
 #include <boost/asio/strand.hpp>
 #include <boost/beast/http.hpp>
 #include "stalk/stalk_types.h"
@@ -14,8 +17,11 @@
 #if BOOST_ASIO_VERSION < 101400
 using executor_context = boost::asio::io_context;
 using Strand = boost::asio::strand<executor_context::executor_type>;
-#else
+#elif BOOST_ASIO_VERSION < 101800
 using executor_context =  boost::asio::executor;
+using Strand = boost::asio::strand<executor_context>;
+#else
+using executor_context =  boost::asio::io_context::executor_type;
 using Strand = boost::asio::strand<executor_context>;
 #endif
 

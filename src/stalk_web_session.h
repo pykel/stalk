@@ -34,7 +34,7 @@ class HttpSession
 {
 public:
 
-    HttpSession(uint64_t id, Strand&& strand/*executor_context& ioc*/, boost::beast::flat_buffer buffer);
+    HttpSession(uint64_t id, boost::beast::flat_buffer buffer);
     virtual ~HttpSession();
 
     HttpSession& setWebsocketPreUpgradeCb(WebsocketPreUpgradeCb cb);
@@ -50,9 +50,8 @@ public:
     void handle_request(Stalk::Request&& req);
     void write(Response&& resp);
     void start_read();
-    void on_timer(boost::system::error_code ec);
-    void on_read(boost::system::error_code ec);
-    void on_write(boost::system::error_code ec, bool close);
+    void on_read(boost::system::error_code ec, std::size_t bytes_transferred);
+    void on_write(bool close, boost::system::error_code ec, std::size_t bytes_transferred);
 
 protected:
 
@@ -61,15 +60,11 @@ protected:
     virtual void do_read() = 0;
     virtual void do_write() = 0;
     virtual void do_eof() = 0;
-    virtual void do_timeout() = 0;
-    virtual void start_timer() = 0;
+    virtual void do_shutdown() = 0;
     virtual void do_websocket_upgrade(Request&& req) = 0;
-    void cancelTimer();
     void requestCb(Request&& request);
 
     uint64_t id_;
-    Strand strand_;
-    boost::asio::steady_timer timer_;
     boost::beast::flat_buffer buffer_;
     LogPtr logger_;
     std::vector<Response> responses_;
@@ -90,10 +85,10 @@ class PlainHttpSession : public HttpSession, public std::enable_shared_from_this
 {
 public:
     // Create the http_session
-    PlainHttpSession(uint64_t id, boost::asio::ip::tcp::socket socket, boost::beast::flat_buffer buffer);
+    PlainHttpSession(uint64_t id, boost::beast::tcp_stream&& stream, boost::beast::flat_buffer buffer);
 
-    boost::asio::ip::tcp::socket& stream();
-    boost::asio::ip::tcp::socket release_stream();
+    boost::beast::tcp_stream& stream();
+    boost::beast::tcp_stream release_stream();
 
     // Start the asynchronous operation
     void run() override;
@@ -105,14 +100,13 @@ protected:
 
     void do_eof() override;
     void do_read() override;
-    void do_timeout() override;
     void do_write() override;
-    void start_timer() override;
+    void do_shutdown() override;
     void do_websocket_upgrade(Request&& req) override;
 
 private:
 
-    boost::asio::ip::tcp::socket socket_;
+    boost::beast::tcp_stream stream_;
 }; // class plain_http_session
 
 
@@ -123,12 +117,12 @@ public:
     // Create the http_session
     SslHttpSession(
         uint64_t id,
-        boost::asio::ip::tcp::socket socket,
+        boost::beast::tcp_stream&& stream,
         boost::asio::ssl::context& ctx,
         boost::beast::flat_buffer buffer);
 
-    boost::beast::ssl_stream<boost::asio::ip::tcp::socket>& stream();
-    boost::beast::ssl_stream<boost::asio::ip::tcp::socket> release_stream();
+    boost::beast::ssl_stream<boost::beast::tcp_stream>& stream();
+    boost::beast::ssl_stream<boost::beast::tcp_stream> release_stream();
 
     // Start the asynchronous operation
     void run() override;
@@ -143,13 +137,12 @@ protected:
     void do_eof() override;
     void do_read() override;
     void do_write() override;
-    void do_timeout() override;
-    void start_timer() override;
+    void do_shutdown() override;
     void do_websocket_upgrade(Request&& req) override;
 
 private:
 
-    boost::beast::ssl_stream<boost::asio::ip::tcp::socket> stream_;
+    boost::beast::ssl_stream<boost::beast::tcp_stream> stream_;
     bool eof_ = false;
 
 }; // class ssl_http_session

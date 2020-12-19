@@ -15,12 +15,21 @@ static const std::string digestName = "sha256";
 
 ConnectionDetail::Security build(const SSL* ssl);
 
-Stalk::ConnectionDetail build(uint64_t id, const boost::asio::ip::tcp::socket& stream)
+Stalk::ConnectionDetail build(uint64_t id, const boost::asio::ip::tcp::socket& socket)
 {
     Stalk::ConnectionDetail detail;
     detail.id = id;
-    detail.peerAddress = stream.remote_endpoint().address().to_string();
-    detail.peerPort = stream.remote_endpoint().port();
+    detail.peerAddress = socket.remote_endpoint().address().to_string();
+    detail.peerPort = socket.remote_endpoint().port();
+    return detail;
+}
+
+Stalk::ConnectionDetail build(uint64_t id, const boost::beast::tcp_stream& stream)
+{
+    Stalk::ConnectionDetail detail;
+    detail.id = id;
+    detail.peerAddress = stream.socket().remote_endpoint().address().to_string();
+    detail.peerPort = stream.socket().remote_endpoint().port();
     return detail;
 }
 
@@ -34,11 +43,11 @@ Stalk::ConnectionDetail build(uint64_t id, const boost::asio::ssl::stream<boost:
     return detail;
 }
 
-Stalk::ConnectionDetail build(uint64_t id, const boost::beast::ssl_stream<boost::asio::ip::tcp::socket>& stream)
+Stalk::ConnectionDetail build(uint64_t id, const boost::beast::ssl_stream<boost::beast::tcp_stream>& stream)
 {
-    Stalk::ConnectionDetail detail = build(id, stream.next_layer());
+    Stalk::ConnectionDetail detail = build(id, stream.next_layer().socket());
     detail.encrypted = true;
-    const SSL* ssl = const_cast<boost::beast::ssl_stream<boost::asio::ip::tcp::socket>&>(stream).native_handle();
+    const SSL* ssl = const_cast<boost::beast::ssl_stream<boost::beast::tcp_stream>&>(stream).native_handle();
 
     detail.security = build(ssl);
     return detail;

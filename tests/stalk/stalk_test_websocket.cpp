@@ -17,7 +17,7 @@ TEST_CASE("stalk-websocket-test") {
 
     std::function<void()> exitTestFn;
 
-    Stalk::Logger::setDefaultLevel(Stalk::Logger::Info);
+    Stalk::Logger::setDefaultLevel(Stalk::Logger::Trace);
 
     auto logger = Stalk::Logger::get("stalk-websocket-test");
     logger->info("starting");
@@ -66,6 +66,8 @@ TEST_CASE("stalk-websocket-test") {
 
     auto webServer = std::make_shared<Stalk::WebServer>(ioc, "::1", 0, serverKey(), serverCert());
 
+    std::vector<std::shared_ptr<Stalk::WebsocketSession>> sessions;
+
     webServer->addHttpRoute(Stalk::Route::Http(
         "/",
         { Stalk::Verb::Get, Stalk::Verb::Connect },
@@ -77,10 +79,14 @@ TEST_CASE("stalk-websocket-test") {
     webServer->addWebsocketRoute(Stalk::Route::Websocket(
         "/websocket_route",
         Stalk::RoutedWebsocketPreUpgradeCb(),
-        [&counters, logger](bool connected, std::shared_ptr<Stalk::WebsocketSession> session, Stalk::RequestVariables&& variables) {
+        [&counters, &sessions, logger](bool connected, std::shared_ptr<Stalk::WebsocketSession> session, Stalk::RequestVariables&& variables) {
             logger->info("WebSocket Route Callback: Connected:{}", connected);
-            session->send("Hello websocket msg from Stalk");
-            ++counters[Counters::ServerWebsocketConnected];
+            if (connected)
+            {
+                sessions.push_back(session);
+                session->send("Hello websocket msg from Stalk");
+                ++counters[Counters::ServerWebsocketConnected];
+            }
         },
         [&counters, logger](std::shared_ptr<Stalk::WebsocketSession> session, std::string&& msg) {
             logger->info("WebSocket Route Callback: msg:{}", msg);
@@ -118,12 +124,19 @@ TEST_CASE("stalk-websocket-test") {
     auto timer = std::make_shared<boost::asio::steady_timer>(ioc);
 
     timer->expires_after(std::chrono::milliseconds(100));
-    timer->async_wait([&ioc, timer, logger](const boost::system::error_code& ec)
+    timer->async_wait([&ioc, &sessions, &webServer, timer, logger](const boost::system::error_code& ec)
         {
             if (!ec)
             {
-                logger->info("Stopping IOC");
-                ioc.stop();
+                logger->info("Stopping");
+                //ioc.stop();
+
+                for (auto& session : sessions)
+                {
+                    session->close();
+                }
+
+                webServer->stop();
             }
         });
 
@@ -156,7 +169,7 @@ TEST_CASE("stalk-websocket-test") {
 
         // Start the web server
         webServer->run();
-        TestCase testCase { false, "/websocket_route", 0, 1, 1, 1, 1, 0 };
+        TestCase testCase { false, "/websocket_route", 0, 1, 1, 1, 1, 1 };
         auto client = createClient(testCase.secure, testCase.path);
 
         ioc.run();
@@ -168,7 +181,7 @@ TEST_CASE("stalk-websocket-test") {
 
         // Start the web server
         webServer->run();
-        TestCase testCase { true, "/websocket_route", 0, 1, 1, 1, 1, 0 };
+        TestCase testCase { true, "/websocket_route", 0, 1, 1, 1, 1, 1 };
         auto client = createClient(testCase.secure, testCase.path);
 
         ioc.run();

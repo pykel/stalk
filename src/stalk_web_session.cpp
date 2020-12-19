@@ -14,10 +14,8 @@ namespace Stalk
 {
 
 // Construct the session
-HttpSession::HttpSession(uint64_t id, Strand&& strand, boost::beast::flat_buffer buffer) :
+HttpSession::HttpSession(uint64_t id, boost::beast::flat_buffer buffer) :
     id_(id),
-    strand_(std::move(strand)),
-    timer_(static_cast<boost::asio::io_context&>(strand_.context()), (std::chrono::steady_clock::time_point::max)()),
     buffer_(std::move(buffer)),
     logger_(Logger::get("WebServer.HttpSession." + std::to_string(reinterpret_cast<uint64_t>(id))))
 {
@@ -63,12 +61,6 @@ const ConnectionDetail& HttpSession::connectionDetail() const
     return connectionDetail_;
 }
 
-void HttpSession::cancelTimer()
-{
-    boost::system::error_code ignoredEc;
-    timer_.cancel(ignoredEc);
-}
-
 void HttpSession::write(Response&& resp)
 {
     responses_.push_back(std::move(resp));
@@ -80,9 +72,6 @@ void HttpSession::write(Response&& resp)
 
 void HttpSession::start_read()
 {
-    // Set the timer
-    timer_.expires_after(std::chrono::seconds(15));
-
     // Make the request empty before reading,
     // otherwise the operation behavior is undefined.
     req_ = BeastRequest();
@@ -90,26 +79,7 @@ void HttpSession::start_read()
     do_read();
 }
 
-// Called when the timer expires.
-void HttpSession::on_timer(boost::system::error_code ec)
-{
-    if (ec && ec != boost::asio::error::operation_aborted)
-    {
-        logger_->error("on_timer: {}", ec.message());
-        return;
-    }
-
-    if (ec)
-        return;
-
-    // Verify that the timer really expired since the deadline may have moved.
-    if (timer_.expiry() <= std::chrono::steady_clock::now())
-        return do_timeout();
-
-    start_timer();
-}
-
-void HttpSession::on_read(boost::system::error_code ec)
+void HttpSession::on_read(boost::system::error_code ec, std::size_t bytes_transferred)
 {
     if (ec)
     {
@@ -119,20 +89,17 @@ void HttpSession::on_read(boost::system::error_code ec)
     // This means they closed the connection
     if (ec == boost::beast::http::error::end_of_stream)
     {
-        cancelTimer();
         return do_eof();
     }
 
     // Happens when the timer closes the socket
     if (ec == boost::asio::error::operation_aborted)
     {
-        cancelTimer();
         return;
     }
 
     if (ec)
     {
-        cancelTimer();
         return;
     }
 
@@ -160,39 +127,19 @@ void HttpSession::on_read(boost::system::error_code ec)
     {
         if (websocketPreUpgradeCb_)
         {
-#if 0
-            std::weak_ptr<HttpSession> self = sharedFromThis();
-            auto sendResp = [self](Response&& resp)
-            {
-                if (self.expired())
-                    return;
+            logger_->trace("on_read: websocketPreUpgradeCb");
 
-                auto session = self.lock();
-                if (session)
-                {
-                    session->write(std::move(resp.impl->response));
-                }
-            };
-#endif
-            auto upgrade = [self](Request&& req)
+            auto upgrade = [self, this](Request&& req)
             {
                 auto session = self.lock();
                 if (session)
                 {
+                    logger_->trace("on_read: upgrade: session calling do_websocket_upgrade {}", req);
                     session->do_websocket_upgrade(std::move(req));
                 }
             };
 
             websocketPreUpgradeCb_(connectionDetail_, std::move(stalkRequest_), std::move(sendResp), std::move(upgrade));
-#if 0
-            std::optional<Response> resp = websocketPreUpgradeCb_(req_);
-            if (resp)
-            {
-                resp->keep_alive(false);
-                write(std::move(resp.value()));
-                return;
-            }
-#endif
         }
         else
         {
@@ -208,17 +155,14 @@ void HttpSession::on_read(boost::system::error_code ec)
         std::weak_ptr<HttpSession> self = sharedFromThis();
         httpRequestCb_(connectionDetail_, std::move(stalkRequest_), sendResp);
     }
-#if 0
-    // Send the response
-    handle_request(std::move(stalkRequest_));
-#endif
+
     // If we aren't at the queue limit, try to pipeline another request
     const size_t MaxQueuedResponses = 8;
     if (responses_.size() < MaxQueuedResponses)
         start_read();
 }
 
-void HttpSession::on_write(boost::system::error_code ec, bool close)
+void HttpSession::on_write(bool close, boost::system::error_code ec, std::size_t bytes_transferred)
 {
     // Happens when the timer closes the socket
     if(ec == boost::asio::error::operation_aborted)
@@ -247,33 +191,26 @@ void HttpSession::on_write(boost::system::error_code ec, bool close)
 
 //----------------------------------------------------------------------------
 
-PlainHttpSession::PlainHttpSession(uint64_t id, boost::asio::ip::tcp::socket socket, boost::beast::flat_buffer buffer) :
-//#if BOOST_ASIO_VERSION < 101400
-//    HttpSession(socket.get_executor().context(), std::move(buffer)),
-//#else
-    HttpSession(id, boost::asio::make_strand(socket.get_executor()), std::move(buffer)),
-//#endif
-    socket_(std::move(socket))
+PlainHttpSession::PlainHttpSession(uint64_t id, boost::beast::tcp_stream&& stream, boost::beast::flat_buffer buffer) :
+    HttpSession(id, std::move(buffer)),
+    stream_(std::move(stream))
 {
-    connectionDetail_ = ConnectionDetailBuilder::build(id, stream());
+    connectionDetail_ = ConnectionDetailBuilder::build(id, stream_.socket());
 }
 
-boost::asio::ip::tcp::socket& PlainHttpSession::stream()
+boost::beast::tcp_stream& PlainHttpSession::stream()
 {
-    return socket_;
+    return stream_;
 }
 
-boost::asio::ip::tcp::socket PlainHttpSession::release_stream()
+boost::beast::tcp_stream PlainHttpSession::release_stream()
 {
-    return std::move(socket_);
+    return std::move(stream_);
 }
 
 // Start the asynchronous operation
 void PlainHttpSession::run()
 {
-    // Run the timer. The timer is operated
-    // continuously, this simplifies the code.
-    on_timer({});
     start_read();
 }
 
@@ -281,33 +218,32 @@ void PlainHttpSession::do_eof()
 {
     // Send a TCP shutdown
     boost::system::error_code ec;
-    socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
+    stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_send, ec);
 
     // At this point the connection is closed gracefully
 }
 
 void PlainHttpSession::do_read()
 {
-    // Read a request
+    // Set the timeout.
+    boost::beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
+
     boost::beast::http::async_read(
-                stream(),
-                buffer_,
-                req_,
-                boost::asio::bind_executor(
-                    strand_,
-                    std::bind(
-                        &HttpSession::on_read,
-                        shared_from_this(),
-                        std::placeholders::_1)));
+        stream(),
+        buffer_,
+        req_,
+        boost::beast::bind_front_handler(
+            &HttpSession::on_read,
+            shared_from_this()));
 }
 
-void PlainHttpSession::do_timeout()
+void PlainHttpSession::do_shutdown()
 {
     // Closing the socket cancels all outstanding operations. They
     // will complete with boost::asio::error::operation_aborted
     boost::system::error_code ec;
-    socket_.shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
-    socket_.close(ec);
+    stream_.socket().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
+    stream_.socket().close(ec);
 }
 
 void PlainHttpSession::do_write()
@@ -318,28 +254,14 @@ void PlainHttpSession::do_write()
     auto& resp = responses_.front().impl->response;
 
     boost::beast::http::async_write(
-                stream(),
-                resp,
-                boost::asio::bind_executor(
-                    strand_,
-                    std::bind(
-                        &HttpSession::on_write,
-                        shared_from_this(),
-                        std::placeholders::_1,
-                        resp.need_eof())));
+        stream(),
+        resp,
+        boost::beast::bind_front_handler(
+            &HttpSession::on_write,
+            shared_from_this(),
+            resp.need_eof()));
 }
 
-void PlainHttpSession::start_timer()
-{
-    // Wait on the timer
-    timer_.async_wait(
-                boost::asio::bind_executor(
-                    strand_,
-                    std::bind(
-                        &HttpSession::on_timer,
-                        shared_from_this(),
-                        std::placeholders::_1)));
-}
 
 void PlainHttpSession::do_websocket_upgrade(Request&& req)
 {
@@ -352,35 +274,31 @@ void PlainHttpSession::do_websocket_upgrade(Request&& req)
 //----------------------------------------------------------------------------
 
 // Create the http_session
-SslHttpSession::SslHttpSession(uint64_t id, boost::asio::ip::tcp::socket socket, boost::asio::ssl::context& ctx, boost::beast::flat_buffer buffer) :
-    HttpSession(id, boost::asio::make_strand(socket.get_executor()), std::move(buffer)),
-    stream_(std::move(socket), ctx)
+SslHttpSession::SslHttpSession(uint64_t id, boost::beast::tcp_stream&& stream, boost::asio::ssl::context& ctx, boost::beast::flat_buffer buffer) :
+    HttpSession(id, std::move(buffer)),
+    stream_(std::move(stream), ctx)
 {
-    connectionDetail_ = ConnectionDetailBuilder::build(id, stream());
+    connectionDetail_ = ConnectionDetailBuilder::build(id, stream_);
     logger_->debug("SslHttpSession: from:{}", connectionDetail_);
 }
 
-boost::beast::ssl_stream<boost::asio::ip::tcp::socket>& SslHttpSession::stream() { return stream_; }
-boost::beast::ssl_stream<boost::asio::ip::tcp::socket> SslHttpSession::release_stream() { return std::move(stream_); }
+boost::beast::ssl_stream<boost::beast::tcp_stream>& SslHttpSession::stream() { return stream_; }
+boost::beast::ssl_stream<boost::beast::tcp_stream> SslHttpSession::release_stream() { return std::move(stream_); }
 
 // Start the asynchronous operation
 void SslHttpSession::run()
 {
-    on_timer({});
-    timer_.expires_after(std::chrono::seconds(15));
+    // Set the timeout.
+    boost::beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
 
     // Perform the SSL handshake
     // Note, this is the buffered version of the handshake.
     stream_.async_handshake(
         boost::asio::ssl::stream_base::server,
         buffer_.data(),
-        boost::asio::bind_executor(
-            strand_,
-            std::bind(
-                &SslHttpSession::on_handshake,
-                shared_from_this(),
-                std::placeholders::_1,
-                std::placeholders::_2)));
+        boost::beast::bind_front_handler(
+            &SslHttpSession::on_handshake,
+            shared_from_this()));
 }
 
 void SslHttpSession::on_handshake(boost::system::error_code ec, std::size_t bytes_used)
@@ -404,17 +322,10 @@ void SslHttpSession::do_eof()
 {
     eof_ = true;
 
-    // Set the timer
-    timer_.expires_after(std::chrono::seconds(15));
-
-    // Perform the SSL shutdown
     stream_.async_shutdown(
-        boost::asio::bind_executor(
-            strand_,
-            std::bind(
-                &SslHttpSession::on_shutdown,
-                shared_from_this(),
-                std::placeholders::_1)));
+        boost::beast::bind_front_handler(
+            &SslHttpSession::on_shutdown,
+            shared_from_this()));
 }
 
 void SslHttpSession::on_shutdown(boost::system::error_code ec)
@@ -424,8 +335,8 @@ void SslHttpSession::on_shutdown(boost::system::error_code ec)
     stream_.lowest_layer().cancel(ignoredEc);
     stream_.lowest_layer().close(ignoredEc);
 #else
-    stream_.next_layer().cancel(ignoredEc);
-    stream_.next_layer().close(ignoredEc);
+    stream_.next_layer().socket().cancel(ignoredEc);
+    stream_.next_layer().socket().close(ignoredEc);
 #endif
     // Happens when the shutdown times out
     if (ec == boost::asio::error::operation_aborted)
@@ -445,16 +356,15 @@ void SslHttpSession::on_shutdown(boost::system::error_code ec)
 
 void SslHttpSession::do_read()
 {
+    boost::beast::get_lowest_layer(stream_).expires_after(std::chrono::seconds(30));
+
     boost::beast::http::async_read(
         stream(),
         buffer_,
         req_,
-        boost::asio::bind_executor(
-            strand_,
-            std::bind(
-                &HttpSession::on_read,
-                shared_from_this(),
-                std::placeholders::_1)));
+        boost::beast::bind_front_handler(
+            &HttpSession::on_read,
+                    shared_from_this()));
 }
 
 void SslHttpSession::do_write()
@@ -467,37 +377,19 @@ void SslHttpSession::do_write()
     boost::beast::http::async_write(
         stream(),
         resp,
-        boost::asio::bind_executor(
-            strand_,
-            std::bind(
-                &HttpSession::on_write,
-                shared_from_this(),
-                std::placeholders::_1,
-                resp.need_eof())));
+        boost::beast::bind_front_handler(
+            &HttpSession::on_write,
+            shared_from_this(),
+            resp.need_eof()));
 }
 
-void SslHttpSession::do_timeout()
+void SslHttpSession::do_shutdown()
 {
     // If this is true it means we timed out performing the shutdown
     if (eof_)
         return;
 
-    // Start the timer again
-    timer_.expires_at((std::chrono::steady_clock::time_point::max)());
-    on_timer({});
     do_eof();
-}
-
-void SslHttpSession::start_timer()
-{
-    // Wait on the timer
-    timer_.async_wait(
-        boost::asio::bind_executor(
-            strand_,
-            std::bind(
-                &HttpSession::on_timer,
-                shared_from_this(),
-                std::placeholders::_1)));
 }
 
 void SslHttpSession::do_websocket_upgrade(Request&& req)

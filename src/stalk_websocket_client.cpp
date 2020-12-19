@@ -53,7 +53,6 @@ public:
         logger_->trace("cert: {}", cert);
         cert_ = cert;
         boost::system::error_code ec;
-        //ctx_.use_certificate(boost::asio::buffer(cert_.data(), cert_.size()), boost::asio::ssl::context::file_format::pem, ec);
         ctx_.use_certificate_chain(boost::asio::buffer(cert_.data(), cert_.size()), ec);
         /// \todo check ec
     }
@@ -67,7 +66,7 @@ public:
     void connect(bool secureSocket, const std::string& host, const std::string& port, Request&& req,
            WebsocketClient::ConnectCb&& connectCb, WebsocketClient::ReceiveMsgCb&& receiveMsgCb, WebsocketClient::ErrorCb&& errorCb)
     {
-        wss_ = std::make_unique<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>>(boost::asio::make_strand(ioc_), ctx_);
+        wss_ = std::make_unique<boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>>(boost::asio::make_strand(ioc_), ctx_);
         wss_->next_layer().set_verify_callback([this](bool preverified, boost::asio::ssl::verify_context& ctx)
             {
                 logger_->trace("WebsocketClientImpl().verify_callback called");
@@ -184,23 +183,18 @@ private:
         if (tls_)
         {
             wss_->async_write(
-                        boost::beast::net::buffer(*msg),
-                            std::bind(
-                                &WebsocketClientImpl::on_write,
-                                shared_from_this(),
-                                std::placeholders::_1,
-                                std::placeholders::_2));
+                boost::beast::net::buffer(*msg),
+                boost::beast::bind_front_handler(
+                    &WebsocketClientImpl::on_write,
+                    shared_from_this()));
         }
         else
         {
             ws_.async_write(
-                        boost::beast::net::buffer(*msg),
-                            std::bind(
-                                &WebsocketClientImpl::on_write,
-                                shared_from_this(),
-                                std::placeholders::_1,
-                                std::placeholders::_2));
-
+                boost::beast::net::buffer(*msg),
+                boost::beast::bind_front_handler(
+                    &WebsocketClientImpl::on_write,
+                    shared_from_this()));
         }
     }
 
@@ -236,34 +230,32 @@ private:
             return fail(ec, "resolve");
         }
 
+
         if (tls_)
         {
+            // Set a timeout on the operation
+            boost::beast::get_lowest_layer(*wss_).expires_after(std::chrono::seconds(30));
             // Make the connection on the IP address we get from a lookup
-            boost::asio::async_connect(
-                        wss_->next_layer().next_layer(),
-                        results.begin(),
-                        results.end(),
-                        std::bind(
-                            &WebsocketClientImpl::on_connect,
-                            shared_from_this(),
-                            std::placeholders::_1));
-
+            boost::beast::get_lowest_layer(*wss_).async_connect(
+                results,
+                boost::beast::bind_front_handler(
+                    &WebsocketClientImpl::on_connect,
+                    shared_from_this()));
         }
         else
         {
+            // Set a timeout on the operation
+            boost::beast::get_lowest_layer(ws_).expires_after(std::chrono::seconds(30));
             // Make the connection on the IP address we get from a lookup
-            boost::asio::async_connect(
-                        ws_.next_layer(),
-                        results.begin(),
-                        results.end(),
-                        std::bind(
-                            &WebsocketClientImpl::on_connect,
-                            shared_from_this(),
-                            std::placeholders::_1));
+            boost::beast::get_lowest_layer(ws_).async_connect(
+                results,
+                boost::beast::bind_front_handler(
+                    &WebsocketClientImpl::on_connect,
+                    shared_from_this()));
         }
     }
 
-    void on_connect(boost::system::error_code ec)
+    void on_connect(boost::system::error_code ec, boost::asio::ip::tcp::resolver::results_type::endpoint_type ep)
     {
         logger_->trace("on_connect: {}", ec.message());
 
@@ -275,13 +267,19 @@ private:
 
         if (tls_)
         {
+            // Set SNI Hostname (many hosts need this to handshake successfully)
+            if(!SSL_set_tlsext_host_name(wss_->next_layer().native_handle(), host_.c_str()))
+            {
+                ec = boost::beast::error_code(static_cast<int>(::ERR_get_error()), boost::asio::error::get_ssl_category());
+                return fail(ec, "connect");
+            }
+
             // Perform the SSL handshake
             wss_->next_layer().async_handshake(
-                        boost::asio::ssl::stream_base::client,
-                        std::bind(
-                            &WebsocketClientImpl::on_ssl_handshake,
-                            shared_from_this(),
-                            std::placeholders::_1));
+                boost::asio::ssl::stream_base::client,
+                boost::beast::bind_front_handler(
+                    &WebsocketClientImpl::on_ssl_handshake,
+                    shared_from_this()));
         }
         else
         {
@@ -302,21 +300,35 @@ private:
         // Perform the websocket handshake
         if (tls_)
         {
+            // Turn off the timeout on the tcp_stream, because the websocket stream has its own timeout system.
+            boost::beast::get_lowest_layer(*wss_).expires_never();
+
+            // Set suggested timeout settings for the websocket
+            wss_->set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client));
+
             wss_->async_handshake(wsHandshakeRawResponse_, req_.get(Field::host), req_.targetStr(),
-                std::bind(
+                boost::beast::bind_front_handler(
                     &WebsocketClientImpl::on_handshake,
-                    shared_from_this(),
-                    std::placeholders::_1));
+                    shared_from_this()));
 
             peerConnectionDetail_ = ConnectionDetailBuilder::build(0, wss_->next_layer());
         }
         else
         {
+            // Turn off the timeout on the tcp_stream, because the websocket stream has its own timeout system.
+            boost::beast::get_lowest_layer(ws_).expires_never();
+
+            // Set suggested timeout settings for the websocket
+            ws_.set_option(boost::beast::websocket::stream_base::timeout::suggested(boost::beast::role_type::client));
+
+            logger_->trace("on_ssl_handshake: {}", req_.get(Field::host));
+            logger_->trace("on_ssl_handshake: {}", req_.targetStr());
+
+            // Perform the websocket handshake
             ws_.async_handshake(wsHandshakeRawResponse_, req_.get(Field::host), req_.targetStr(),
-                std::bind(
+                boost::beast::bind_front_handler(
                     &WebsocketClientImpl::on_handshake,
-                    shared_from_this(),
-                    std::placeholders::_1));
+                    shared_from_this()));
 
             peerConnectionDetail_ = ConnectionDetailBuilder::build(0, ws_.next_layer());
         }
@@ -349,25 +361,19 @@ private:
     {
         if (tls_)
         {
-            // Read a message into our buffer
             wss_->async_read(
                 buffer_,
-                std::bind(
+                boost::beast::bind_front_handler(
                     &WebsocketClientImpl::on_read,
-                    shared_from_this(),
-                    std::placeholders::_1,
-                    std::placeholders::_2));
+                    shared_from_this()));
         }
         else
         {
-            // Read a message into our buffer
             ws_.async_read(
                 buffer_,
-                std::bind(
+                boost::beast::bind_front_handler(
                     &WebsocketClientImpl::on_read,
-                    shared_from_this(),
-                    std::placeholders::_1,
-                    std::placeholders::_2));
+                    shared_from_this()));
         }
     }
 
@@ -417,29 +423,22 @@ private:
             logger_->error("on_shutdown: {}", ec.message());
             return fail(ec, "shutdown");
         }
-#if 0
-        if (ec == boost::asio::error::eof)
-        {
-            // Rationale:
-            // http://stackoverflow.com/questions/25587403/boost-asio-ssl-async-shutdown-always-finishes-with-an-error
-            ec.assign(0, ec.category());
-        }
-#endif
+
         // If we get here then the connection is closed gracefully
     }
 
     void shutdown_ssl()
     {
         boost::system::error_code ignoredEc;
-        wss_->next_layer().next_layer().lowest_layer().cancel(ignoredEc);
-        wss_->next_layer().next_layer().lowest_layer().close(ignoredEc);
+        boost::beast::get_lowest_layer(*wss_).cancel();//ignoredEc);
+        boost::beast::get_lowest_layer(*wss_).close();//ignoredEc);
     }
 
     void shutdown()
     {
         boost::system::error_code ignoredEc;
-        ws_.next_layer().lowest_layer().cancel(ignoredEc);
-        ws_.next_layer().lowest_layer().close(ignoredEc);
+        boost::beast::get_lowest_layer(ws_).cancel();//ignoredEc);
+        boost::beast::get_lowest_layer(ws_).close();//ignoredEc);
     }
 
     boost::asio::io_context& ioc_;
@@ -450,8 +449,8 @@ private:
     std::string host_;
     std::string port_;
     boost::asio::ip::tcp::resolver resolver_;
-    boost::beast::websocket::stream<boost::asio::ip::tcp::socket> ws_;
-    std::unique_ptr<boost::beast::websocket::stream<boost::asio::ssl::stream<boost::asio::ip::tcp::socket>>> wss_;
+    boost::beast::websocket::stream<boost::beast::tcp_stream> ws_;
+    std::unique_ptr<boost::beast::websocket::stream<boost::beast::ssl_stream<boost::beast::tcp_stream>>> wss_;
     boost::beast::websocket::response_type wsHandshakeRawResponse_;
     Response resp_;
     boost::beast::flat_buffer buffer_;

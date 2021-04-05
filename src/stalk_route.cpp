@@ -4,11 +4,7 @@
 #include <numeric>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/trim.hpp>
-//#include "stalk_verb.h"
-//#include "stalk_request.h"
-//#include "stalk_response.h"
-//#include "stalk_websocket_session.h"
-//#include "stalk_types.h"
+
 
 namespace Stalk
 {

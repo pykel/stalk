@@ -26,6 +26,7 @@ set(HEADER_FILES
     ${HEADER_PATH}/stalk_status.h
     ${HEADER_PATH}/stalk_verb.h
     ${HEADER_PATH}/stalk_request.h
+    ${HEADER_PATH}/stalk_connection_detail_fmt.h
     ${HEADER_PATH}/stalk_connection_detail_ostream.h
     ${HEADER_PATH}/stalk_types.h
     ${HEADER_PATH}/stalk_route.h

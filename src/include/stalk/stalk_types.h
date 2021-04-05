@@ -28,6 +28,10 @@ using RoutedWebsocketReadCb = std::function<void(std::shared_ptr<WebsocketSessio
 using RoutedHttpRequestCb = std::function<void(ConnectionDetail, Request&&, RequestVariables&& variables, SendResponse&& send)>;
 using UnroutedRequestCb = std::function<void(Status, ConnectionDetail, Request&&, SendResponse&& send)>;
 
+using VerifyCallbackFn = std::function<bool(bool preVerified, ConnectionDetail::Security::Cert&& peer,
+                                            std::vector<ConnectionDetail::Security::Cert>&& validatedCertStack,
+                                            std::vector<ConnectionDetail::Security::Cert>&& untrustedCertStack)>;
+
 }
 
 #endif

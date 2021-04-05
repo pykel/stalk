@@ -1,5 +1,4 @@
-#ifndef stalk_connection_detail_builder_INCLUDED
-#define stalk_connection_detail_builder_INCLUDED
+#pragma once
 
 #include <openssl/ssl.h>
 #include <boost/asio.hpp>
@@ -28,5 +27,3 @@ Stalk::ConnectionDetail::Security::Cert buildCertDetail(const X509* cert);
 
 } // namespace ConnectionDetailBuilder
 } // namespace Stalk
-
-#endif

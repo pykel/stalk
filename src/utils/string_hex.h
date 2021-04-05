@@ -1,5 +1,4 @@
-#ifndef string_hex_INCLUDED
-#define string_hex_INCLUDED
+#pragma once
 
 #include <string>
 
@@ -32,6 +31,4 @@ inline std::string toHexString(const T& begin, const T& end, int delim = -1)
     return ret;
 }
 
-}
-
-#endif
+} // namespace StringUtils

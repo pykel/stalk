@@ -1,5 +1,4 @@
-#ifndef web_client_tcp_INCLUDED
-#define web_client_tcp_INCLUDED
+#pragma once
 
 #include <cstdlib>
 #include <functional>
@@ -48,6 +47,3 @@ private:
     WebClient::ErrorCb errorCb_;
     Stalk::LogPtr logger_;
 };
-
-
-#endif // ifndef web_client_tcp_INCLUDED

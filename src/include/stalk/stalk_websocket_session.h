@@ -1,5 +1,4 @@
-#ifndef stalk_websocket_session_INCLUDED
-#define stalk_websocket_session_INCLUDED
+#pragma once
 
 #include <string>
 #include <memory>
@@ -42,5 +41,3 @@ private:
 std::ostream& operator<<(std::ostream&, const WebsocketSession&);
 
 } // namespace Stalk
-
-#endif

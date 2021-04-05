@@ -1,5 +1,4 @@
-#ifndef stalk_status_INCLUDED
-#define stalk_status_INCLUDED
+#pragma once
 
 #include <iostream>
 
@@ -92,5 +91,3 @@ inline std::ostream& operator<<(std::ostream& os, Status s)
 }
 
 }
-
-#endif

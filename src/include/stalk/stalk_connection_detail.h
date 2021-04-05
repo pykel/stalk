@@ -1,5 +1,4 @@
-#ifndef stalk_connection_detail_INCLUDED
-#define stalk_connection_detail_INCLUDED
+#pragma once
 
 #include <stdint.h>
 #include <string>
@@ -43,6 +42,3 @@ struct ConnectionDetail
 };
 
 } // namespace Stalk
-
-#endif
-

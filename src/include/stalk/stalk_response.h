@@ -1,5 +1,4 @@
-#ifndef stalk_response_INCLUDED
-#define stalk_response_INCLUDED
+#pragma once
 
 #include <string>
 #include <memory>
@@ -58,5 +57,3 @@ struct Response
 std::ostream& operator<<(std::ostream&, const Response&);
 
 } // namespace Stalk
-
-#endif

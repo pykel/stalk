@@ -1,5 +1,4 @@
-#ifndef stalk_field_INCLUDED
-#define stalk_field_INCLUDED
+#pragma once
 
 namespace Stalk {
 
@@ -364,5 +363,3 @@ enum class Field : unsigned short
 };
 
 } // namespace Stalk
-
-#endif

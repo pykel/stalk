@@ -1,5 +1,4 @@
-#ifndef crypto_utils_INCLUDED
-#define crypto_utils_INCLUDED
+#pragma once
 
 #include <functional>
 #include <string>
@@ -85,5 +84,3 @@ inline std::string certAsPEM(const X509* cert)
 }
 
 } // namespace CryptoUtils
-
-#endif

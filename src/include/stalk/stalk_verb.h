@@ -1,5 +1,4 @@
-#ifndef stalk_verb_INCLUDED
-#define stalk_verb_INCLUDED
+#pragma once
 
 #include <iostream>
 
@@ -129,6 +128,4 @@ inline const char* verbString(Verb verb)
     return "Unknown";
 }
 
-}
-
-#endif
+} // namespace stalk

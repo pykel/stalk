@@ -1,5 +1,4 @@
-#ifndef web_client_types_INCLUDED
-#define web_client_types_INCLUDED
+#pragma once
 
 #include <functional>
 #include <string>
@@ -16,6 +15,3 @@ namespace WebClient
     typedef std::function<void(const boost::system::error_code&, const std::string&)> ErrorCb;
 
 } // namespace WebClient
-
-#endif // ifndef web_client_types_INCLUDED
-

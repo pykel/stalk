@@ -1,5 +1,4 @@
-#ifndef stalk_client_INCLUDED
-#define stalk_client_INCLUDED
+#pragma once
 
 #include <stdint.h>
 #include <string>
@@ -84,5 +83,3 @@ private:
 };
 
 } // namespace Stalk
-
-#endif

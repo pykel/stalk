@@ -1,5 +1,4 @@
-#ifndef stalk_request_INCLUDED
-#define stalk_request_INCLUDED
+#pragma once
 
 #include <string>
 #include <string_view>
@@ -59,5 +58,3 @@ struct Request
 std::ostream& operator<<(std::ostream&, const Request&);
 
 } // namespace Stalk
-
-#endif

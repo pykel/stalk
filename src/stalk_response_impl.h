@@ -1,5 +1,4 @@
-#ifndef stalk_response_impl_INCLUDED
-#define stalk_response_impl_INCLUDED
+#pragma once
 
 #include <memory>
 #include "stalk_types_internal.h"
@@ -20,5 +19,3 @@ struct ResponseImpl
 };
 
 } // namespace Stalk
-
-#endif

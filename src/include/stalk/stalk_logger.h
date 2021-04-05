@@ -124,5 +124,3 @@ using LogPtr = std::shared_ptr<Logger>;
 using Log = std::shared_ptr<Logger>;
 
 } // namespace Stalk
-
-

@@ -28,4 +28,4 @@ inline std::string remove_if(const std::string& s, std::function<bool(const char
     return str;
 }
 
-} }
+} } // namespace Utils::String

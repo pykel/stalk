@@ -1,5 +1,4 @@
-#ifndef web_client_ssl_INCLUDED
-#define web_client_ssl_INCLUDED
+#pragma once
 
 #include <cstdlib>
 #include <functional>
@@ -52,6 +51,3 @@ private:
     WebClient::ErrorCb errorCb_;
     Stalk::LogPtr logger_;
 };
-
-
-#endif // ifndef web_client_ssl_INCLUDED

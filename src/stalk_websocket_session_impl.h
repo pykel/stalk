@@ -1,5 +1,4 @@
-#ifndef stalk_websocket_session_impl_INCLUDED
-#define stalk_websocket_session_impl_INCLUDED
+#pragma once
 
 #include <string>
 #include <deque>
@@ -150,5 +149,3 @@ std::shared_ptr<SslWebsocketSession> make_websocket_session(uint64_t id, boost::
 
 
 } // namespace Stalk
-
-#endif

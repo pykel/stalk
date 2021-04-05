@@ -1,5 +1,4 @@
-#ifndef stalk_route_INCLUDED
-#define stalk_route_INCLUDED
+#pragma once
 
 #include <string>
 #include <functional>
@@ -94,5 +93,3 @@ namespace Route
 } // namespace Route
 
 } // namespace Stalk
-
-#endif

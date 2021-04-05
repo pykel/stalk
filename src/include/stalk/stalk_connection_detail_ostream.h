@@ -1,5 +1,4 @@
-#ifndef stalk_connection_detail_ostream_INCLUDED
-#define stalk_connection_detail_ostream_INCLUDED
+#pragma once
 
 #include <iostream>
 #include "stalk_connection_detail.h"
@@ -51,6 +50,3 @@ inline std::ostream& operator<<(std::ostream& os, const ConnectionDetail& connec
 }
 
 } // namespace Stalk
-
-#endif
-

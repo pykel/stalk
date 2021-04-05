@@ -1,5 +1,4 @@
-#ifndef stalk_router_INCLUDED
-#define stalk_router_INCLUDED
+#pragma once
 
 #include <string>
 #include <functional>
@@ -36,5 +35,3 @@ private:
 };
 
 } // namespace Stalk
-
-#endif

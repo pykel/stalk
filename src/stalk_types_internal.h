@@ -1,5 +1,4 @@
-#ifndef stalk_types_internal_INCLUDED
-#define stalk_types_internal_INCLUDED
+#pragma once
 
 #include <string>
 #include <functional>
@@ -56,5 +55,3 @@ using WebsocketConnectCb = std::function<void(std::shared_ptr<WebsocketSessionIm
 using WebsocketReadCb = std::function<void(std::shared_ptr<WebsocketSessionImpl> session, std::string&& msg)>;
 
 } // namespace Stalk
-
-#endif

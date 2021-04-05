@@ -1,5 +1,4 @@
-#ifndef stalk_types_INCLUDED
-#define stalk_types_INCLUDED
+#pragma once
 
 #include <string>
 #include <functional>
@@ -33,5 +32,3 @@ using VerifyCallbackFn = std::function<bool(bool preVerified, ConnectionDetail::
                                             std::vector<ConnectionDetail::Security::Cert>&& untrustedCertStack)>;
 
 }
-
-#endif

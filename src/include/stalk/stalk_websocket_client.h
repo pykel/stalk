@@ -1,5 +1,4 @@
-#ifndef stalk_websocket_client_INCLUDED
-#define stalk_websocket_client_INCLUDED
+#pragma once
 
 #include <stdint.h>
 #include <string>
@@ -65,5 +64,3 @@ private:
 };
 
 } // namespace Stalk
-
-#endif

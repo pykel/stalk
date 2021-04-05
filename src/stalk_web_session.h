@@ -1,5 +1,4 @@
-#ifndef stalk_web_session_INCLUDED
-#define stalk_web_session_INCLUDED
+#pragma once
 
 #include <stdint.h>
 #include <functional>
@@ -149,5 +148,3 @@ private:
 
 
 } // namespace Stalk
-
-#endif

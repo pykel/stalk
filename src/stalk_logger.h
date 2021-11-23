@@ -11,6 +11,8 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
+#include "stalk/stalk_logger_interface.h"
+
 namespace Stalk
 {
 
@@ -18,19 +20,10 @@ class Logger
 {
 public:
 
-    enum Level
-    {
-        Trace = 0,
-        Debug = 1,
-        Info = 2,
-        Warn = 3,
-        Err = 4,
-        Critical = 5,
-        Off = 6
-    };
+    using Level = Stalk::LoggerInterface::Level;
 
-    using ErrorHandler = std::function<void(const std::string&)>;
-    using LogCb = std::function<void(Level,const std::string_view& msg)>;
+    using ErrorHandler = Stalk::LoggerInterface::ErrorHandler;
+    using LogCb = Stalk::LoggerInterface::LogCb;
 
     Logger() {}
     Logger(const std::string& name) : name_(name), level_(defaultLevel_.load()) {}

@@ -14,7 +14,7 @@
 #include <boost/beast/version.hpp>
 #include <boost/beast/ssl.hpp>
 #include "stalk_types_internal.h"
-#include "stalk/stalk_logger.h"
+#include "stalk_logger.h"
 
 
 namespace Stalk

@@ -16,7 +16,7 @@
 #include "stalk_verb_convert.h"
 #include "stalk_field_convert.h"
 #include "stalk_connection_detail_builder.h"
-#include "stalk/stalk_logger.h"
+#include "stalk_logger.h"
 #include "stalk_listener_impl.h"
 //#include "stalk/stalk_connection_detail_fmt.h"
 #include "utils/crypto_utils.h"

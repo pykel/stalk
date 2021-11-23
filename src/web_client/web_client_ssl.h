@@ -9,7 +9,7 @@
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/ssl/stream.hpp>
 #include "web_client_types.h"
-#include "stalk/stalk_logger.h"
+#include "stalk_logger.h"
 
 
 // Performs an HTTP GET and prints the response

@@ -2,6 +2,7 @@
 #include "doctest.h"
 #include <iostream>
 #include <thread>
+#include <mutex>
 #include <boost/asio/ssl/stream.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include "stalk/stalk_request.h"

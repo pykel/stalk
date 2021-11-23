@@ -8,7 +8,7 @@
 #include "stalk_response_impl.h"
 #include "stalk_websocket_session_impl.h"
 #include "stalk/stalk_connection_detail_ostream.h"
-#include "stalk/stalk_logger.h"
+#include "stalk_logger.h"
 
 namespace Stalk
 {

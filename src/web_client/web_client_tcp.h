@@ -8,7 +8,7 @@
 #include <boost/beast/http.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include "web_client_types.h"
-#include "stalk/stalk_logger.h"
+#include "stalk_logger.h"
 
 
 class WebClientTcp : public std::enable_shared_from_this<WebClientTcp>

@@ -20,7 +20,7 @@
 #endif
 #include "stalk/stalk_types.h"
 #include "stalk_types_internal.h"
-#include "stalk/stalk_logger.h"
+#include "stalk_logger.h"
 #include "stalk/stalk_request.h"
 #include "stalk/stalk_connection_detail.h"
 

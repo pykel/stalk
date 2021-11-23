@@ -1,4 +1,5 @@
-#include "stalk/stalk_logger.h"
+#include "stalk_logger.h"
+#include "stalk/stalk_logger_interface.h"
 
 namespace Stalk
 {
@@ -32,6 +33,9 @@ void Logger::log(Level lvl, const std::string& msg)
     }
 }
 
+std::atomic<int> Logger::defaultLevel_ = Logger::Level::Info;
+Logger::LogCb Logger::logCb_ = Logger::LogCb();
+
 Logger::Level Logger::levelFromString(const char* lvl)
 {
     if (strcmp(lvl, "trace") == 0)
@@ -52,8 +56,20 @@ Logger::Level Logger::levelFromString(const char* lvl)
     return Level::Warn;
 }
 
-std::atomic<int> Logger::defaultLevel_ = Logger::Level::Info;
-Logger::LogCb Logger::logCb_ = Logger::LogCb();
+
+/// Externally accessible functions
+namespace LoggerInterface
+{
+    void setDefaultLevel(LoggerInterface::Level level)
+    {
+        return Logger::setDefaultLevel(level);
+    }
+    
+    void setLogCb(LoggerInterface::LogCb cb)
+    {
+        return Logger::setLogCb(cb);
+    }
+}
 
 } // namespace Stalk
 

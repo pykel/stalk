@@ -15,7 +15,7 @@
 #include "stalk_verb_convert.h"
 #include "stalk_field_convert.h"
 #include "stalk_connection_detail_builder.h"
-#include "stalk/stalk_logger.h"
+#include "stalk_logger.h"
 
 
 namespace Stalk

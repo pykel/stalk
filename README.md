@@ -49,7 +49,10 @@ The example includes a simple timer based deferred response.
 # Building
 ```bash
 mkdir -p build && cd build
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=$PWD/install ../
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PWD/install ../
+# or building with tests/examples
+cmake -DSTALK__ENABLE_TESTS=ON -DSTALK__ENABLE_EXAMPLES=ON \
+      -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PWD/install ../
 
 make -j$(nproc)
 make install
@@ -57,3 +60,4 @@ make install
 
 # Tests
 There are several test cases that validate routing, route variables, multi-threading, deferred response handling.
+

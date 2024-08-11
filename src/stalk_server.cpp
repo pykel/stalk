@@ -115,7 +115,7 @@ WebServerImpl::WebServerImpl(boost::asio::io_context& ioc,
             logger_->debug("WebsocketPreUpgradeCb {}", req);
 
             BeastRequest& beastRequest = req.impl->request;
-            auto matchingRoute = router_.getWebsocketRoute(beastRequest.target().to_string());
+            auto matchingRoute = router_.getWebsocketRoute(beastRequest.target());
             if (!matchingRoute)
             {
                 logger_->debug("WebsocketPreUpgradeCb : No matching route found");
@@ -143,7 +143,7 @@ WebServerImpl::WebServerImpl(boost::asio::io_context& ioc,
 
             BeastRequest& beastRequest = session->request().impl->request;
 
-            auto matchingRoute = router_.getWebsocketRoute(beastRequest.target().to_string());
+            auto matchingRoute = router_.getWebsocketRoute(beastRequest.target());
             if (!matchingRoute)// || !(*matchingRoute).first.connectCb())
             {
                 logger_->debug("WebsocketConnectCb : No matching route found");

@@ -35,7 +35,7 @@ using BeastRequest = boost::beast::http::request<boost::beast::http::string_body
 
 inline std::ostream& operator<<(std::ostream& os, const BeastRequest& request)
 {
-    os << request.target().to_string() << " : " << request.method() << " ";
+    os << request.target() << " : " << request.method() << " ";
     for (const auto& hdr : request)
     {
         os << hdr.name_string() << ":[" << hdr.value() << "] ";

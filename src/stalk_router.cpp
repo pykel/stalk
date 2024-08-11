@@ -1,4 +1,5 @@
 #include "stalk/stalk_router.h"
+#include <algorithm>
 
 namespace Stalk
 {
